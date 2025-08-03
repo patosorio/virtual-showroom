@@ -76,7 +76,8 @@ The API will be available at `http://localhost:8000`
 
 ## License
 
-[Add your license here]
+This project is licensed under the [MIT License](LICENSE).
+
 
 ## Project Status
 
