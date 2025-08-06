@@ -77,6 +77,7 @@ jspm_packages/
 .env.production.local
 .env.local
 .env.example
+service-account.json
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -380,4 +381,79 @@ Thumbs.db
 *.key
 *.crt
 *.p12
-*.pfx 
+*.pfx
+
+# Virtual Showroom specific
+# Docker volumes
+backend_virtual_showroom_postgres_data/
+backend_postgres_data/
+
+# Alembic migrations (keep the files but ignore generated SQL)
+alembic/versions/*.sql
+
+# Firebase service account
+backend/app/core/firebase/service-account.json
+app/core/firebase/service-account.json
+
+# Google Cloud credentials
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!next.config.ts
+!tailwind.config.ts
+!postcss.config.ts
+!eslint.config.mjs
+
+# Upload directories
+uploads/
+backend/uploads/
+client/uploads/
+
+# Media files (if any)
+media/
+static/media/
+
+# Cache directories
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+dist/
+
+# Environment files (already covered but being explicit)
+.env*
+!.env.example
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Log files
+*.log
+logs/
+
+# Python virtual environments
+venv/
+env/
+.venv/
+ENV/
+
+# Node modules
+node_modules/
+
+# Build outputs
+build/
+dist/
+out/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db 
