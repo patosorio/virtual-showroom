@@ -12,7 +12,8 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.collection import Collection
-from app.models.product import Product
+from app.models.product.product import Product
+from app.models.product.variant import ProductVariant
 from app.repositories.base import BaseRepository
 
 

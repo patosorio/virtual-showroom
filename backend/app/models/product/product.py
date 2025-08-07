@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from app.models.product.technical_specification import TechnicalSpecification
     from app.models.product.technical_drawing import TechnicalDrawing
     from app.models.product.size_chart import SizeChart
+    from app.models.file import File
 
 
 class Product(BaseModel):
@@ -167,7 +168,7 @@ class Product(BaseModel):
     )
     
     # Additional Metadata
-    metadata = Column(
+    extra_data = Column(
         JSON,
         default=dict,
         nullable=True,
@@ -212,6 +213,12 @@ class Product(BaseModel):
         "SizeChart",
         back_populates="product",
         uselist=False,
+        cascade="all, delete-orphan"
+    )
+    
+    files: Mapped[List["File"]] = relationship(
+        "File",
+        back_populates="product",
         cascade="all, delete-orphan"
     )
     
