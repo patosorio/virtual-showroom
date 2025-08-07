@@ -11,12 +11,12 @@ from sqlalchemy import select, and_
 from sqlalchemy.orm import selectinload, joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.product import Product
-from app.models.product_variant import ProductVariant
-from app.models.product_image import ProductImage
-from app.models.technical_specification import TechnicalSpecification
-from app.models.technical_drawing import TechnicalDrawing
-from app.models.size_chart import SizeChart
+from app.models.product.product import Product
+from app.models.product.variant import ProductVariant
+from app.models.product.image import ProductImage
+from app.models.product.technical_specification import TechnicalSpecification
+from app.models.product.technical_drawing import TechnicalDrawing
+from app.models.product.size_chart import SizeChart
 from app.repositories.base import BaseRepository
 
 
@@ -269,3 +269,153 @@ class ProductRepository(BaseRepository[Product]):
         
         result = await self.db.execute(query)
         return result.scalars().all()
+
+
+class ProductVariantRepository(BaseRepository[ProductVariant]):
+    """Repository for ProductVariant model."""
+    
+    def __init__(self, db: AsyncSession):
+        super().__init__(ProductVariant, db)
+    
+    async def get_by_product(
+        self, 
+        product_id: UUID,
+        available_only: bool = False
+    ) -> List[ProductVariant]:
+        """Get variants for a product."""
+        filters = [ProductVariant.product_id == product_id, ProductVariant.is_deleted == False]
+        if available_only:
+            filters.append(ProductVariant.is_available == True)
+        
+        query = (
+            select(ProductVariant)
+            .options(selectinload(ProductVariant.images))
+            .where(and_(*filters))
+            .order_by(ProductVariant.sort_order, ProductVariant.name)
+        )
+        
+        result = await self.db.execute(query)
+        return result.scalars().all()
+    
+    async def get_by_color(
+        self, 
+        product_id: UUID, 
+        color: str
+    ) -> Optional[ProductVariant]:
+        """Get variant by product and color."""
+        query = (
+            select(ProductVariant)
+            .options(selectinload(ProductVariant.images))
+            .where(and_(
+                ProductVariant.product_id == product_id,
+                ProductVariant.color == color,
+                ProductVariant.is_deleted == False
+            ))
+        )
+        
+        result = await self.db.execute(query)
+        return result.scalars().first()
+
+
+class ProductImageRepository(BaseRepository[ProductImage]):
+    """Repository for ProductImage model."""
+    
+    def __init__(self, db: AsyncSession):
+        super().__init__(ProductImage, db)
+    
+    async def get_by_product(
+        self, 
+        product_id: UUID,
+        image_type: Optional[str] = None
+    ) -> List[ProductImage]:
+        """Get images for a product."""
+        filters = [ProductImage.product_id == product_id, ProductImage.is_deleted == False]
+        if image_type:
+            filters.append(ProductImage.type == image_type)
+        
+        query = (
+            select(ProductImage)
+            .where(and_(*filters))
+            .order_by(ProductImage.sort_order, ProductImage.created_at)
+        )
+        
+        result = await self.db.execute(query)
+        return result.scalars().all()
+    
+    async def get_by_variant(
+        self, 
+        variant_id: UUID,
+        image_type: Optional[str] = None
+    ) -> List[ProductImage]:
+        """Get images for a variant."""
+        filters = [ProductImage.variant_id == variant_id, ProductImage.is_deleted == False]
+        if image_type:
+            filters.append(ProductImage.type == image_type)
+        
+        query = (
+            select(ProductImage)
+            .where(and_(*filters))
+            .order_by(ProductImage.sort_order, ProductImage.created_at)
+        )
+        
+        result = await self.db.execute(query)
+        return result.scalars().all()
+
+
+class TechnicalSpecificationRepository(BaseRepository[TechnicalSpecification]):
+    """Repository for TechnicalSpecification model."""
+    
+    def __init__(self, db: AsyncSession):
+        super().__init__(TechnicalSpecification, db)
+    
+    async def get_by_product(
+        self, 
+        product_id: UUID,
+        spec_type: Optional[str] = None
+    ) -> List[TechnicalSpecification]:
+        """Get technical specifications for a product."""
+        filters = [TechnicalSpecification.product_id == product_id, TechnicalSpecification.is_deleted == False]
+        if spec_type:
+            filters.append(TechnicalSpecification.type == spec_type)
+        
+        query = (
+            select(TechnicalSpecification)
+            .where(and_(*filters))
+            .order_by(TechnicalSpecification.sort_order, TechnicalSpecification.type)
+        )
+        
+        result = await self.db.execute(query)
+        return result.scalars().all()
+
+
+class TechnicalDrawingRepository(BaseRepository[TechnicalDrawing]):
+    """Repository for TechnicalDrawing model."""
+    
+    def __init__(self, db: AsyncSession):
+        super().__init__(TechnicalDrawing, db)
+    
+    async def get_by_product(
+        self, 
+        product_id: UUID,
+        view: Optional[str] = None
+    ) -> List[TechnicalDrawing]:
+        """Get technical drawings for a product."""
+        filters = [TechnicalDrawing.product_id == product_id, TechnicalDrawing.is_deleted == False]
+        if view:
+            filters.append(TechnicalDrawing.view == view)
+        
+        query = (
+            select(TechnicalDrawing)
+            .where(and_(*filters))
+            .order_by(TechnicalDrawing.sort_order, TechnicalDrawing.view)
+        )
+        
+        result = await self.db.execute(query)
+        return result.scalars().all()
+
+
+class SizeChartRepository(BaseRepository[SizeChart]):
+    """Repository for SizeChart model."""
+    
+    def __init__(self, db: AsyncSession):
+        super().__init__(SizeChart, db)

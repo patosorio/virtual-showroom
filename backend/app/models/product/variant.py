@@ -101,7 +101,7 @@ class ProductVariant(BaseModel):
     )
     
     # Metadata
-    metadata = Column(
+    extra_data = Column(
         JSON,
         default=dict,
         nullable=True,

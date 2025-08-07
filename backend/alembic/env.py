@@ -13,6 +13,18 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app.core.config import settings
 from app.core.database import Base, sync_engine
 
+# Import all models so Alembic can detect them
+from app.models.base import BaseModel
+from app.models.collection import Collection
+from app.models.product.product import Product
+from app.models.product.variant import ProductVariant
+from app.models.product.image import ProductImage
+from app.models.product.technical_specification import TechnicalSpecification
+from app.models.product.technical_drawing import TechnicalDrawing
+from app.models.product.size_chart import SizeChart
+from app.models.file import File
+from app.models.user import User
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config

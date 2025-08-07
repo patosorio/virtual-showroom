@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.firebase.auth import verify_firebase_token
 from app.core.exceptions import UnauthorizedError, ForbiddenError
-from app.services.product import ProductService
+from app.services.product.service import ProductService
 from app.services.collection import CollectionService
 
 # Security scheme for JWT tokens

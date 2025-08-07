@@ -1,13 +1,13 @@
 from datetime import date
 from typing import List, TYPE_CHECKING
 
-from sqlalchemy import Column, String, Integer, Text, Date, JSON, Index
+from sqlalchemy import Column, String, Integer, Text, Date, JSON, Boolean, Index
 from sqlalchemy.orm import relationship, Mapped
 
 from app.models.base import BaseModel
 
 if TYPE_CHECKING:
-    from app.models.product import Product
+    from app.models.product.product import Product
     from app.models.file import File
 
 
@@ -94,7 +94,7 @@ class Collection(BaseModel):
     )
     
     # Metadata and Settings
-    metadata = Column(
+    extra_data = Column(
         JSON,
         default=dict,
         nullable=True,

@@ -1,7 +1,6 @@
 from typing import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.pool import NullPool
 from sqlalchemy import create_engine
 
@@ -34,8 +33,11 @@ AsyncSessionLocal = async_sessionmaker(
     autoflush=False,
 )
 
-# Create declarative base
-Base = declarative_base()
+# Import the Base from models (where all models are registered)
+from app.models.base import Base
+
+# Import all models to ensure they're registered with Base metadata
+from app.models import *  # noqa: F401,F403
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
