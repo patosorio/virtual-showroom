@@ -26,7 +26,9 @@ class AuthService(BaseService[User, UserRepository]):
 
     def __init__(self, db: AsyncSession):
         """Initialize auth service."""
-        super().__init__(db, UserRepository, User)
+        self.db = db
+        self.repository = UserRepository(db)
+        self.model = User
 
     async def create_user(
         self,
