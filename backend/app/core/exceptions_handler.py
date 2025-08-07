@@ -5,8 +5,12 @@ Global exception handlers for the FastAPI application.
 import logging
 from fastapi import Request
 from fastapi.responses import JSONResponse
-
 from .exceptions import AppBaseException
+
+# FastAPI exception handlers
+from fastapi import HTTPException
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +27,59 @@ async def global_exception_handler(request: Request, exc: AppBaseException) -> J
     return JSONResponse(
         status_code=exc.status_code,
         content=exc.to_dict()
+    )
+
+
+async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+    """Handle FastAPI HTTP exceptions."""
+    logger.warning(f"HTTP exception: {exc.status_code} - {exc.detail}", extra={
+        "path": request.url.path,
+        "method": request.method
+    })
+    
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": True,
+            "status_code": exc.status_code,
+            "detail": exc.detail
+        }
+    )
+
+
+async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+    """Handle Pydantic validation errors."""
+    logger.warning(f"Validation error: {exc.errors()}", extra={
+        "path": request.url.path,
+        "method": request.method
+    })
+    
+    return JSONResponse(
+        status_code=422,
+        content={
+            "error": True,
+            "status_code": 422,
+            "detail": "Validation failed",
+            "error_code": "VALIDATION_ERROR",
+            "errors": exc.errors()
+        }
+    )
+
+
+async def starlette_http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
+    """Handle Starlette HTTP exceptions."""
+    logger.error(f"Starlette HTTP exception: {exc.status_code} - {exc.detail}", extra={
+        "path": request.url.path,
+        "method": request.method
+    })
+    
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": True,
+            "status_code": exc.status_code,
+            "detail": exc.detail or "Internal server error"
+        }
     )
 
 
@@ -47,4 +104,7 @@ async def generic_exception_handler(request: Request, exc: Exception) -> JSONRes
 def setup_exception_handlers(app):
     """Setup global exception handlers for the FastAPI application."""
     app.add_exception_handler(AppBaseException, global_exception_handler)
+    app.add_exception_handler(HTTPException, http_exception_handler)
+    app.add_exception_handler(RequestValidationError, validation_exception_handler)
+    app.add_exception_handler(StarletteHTTPException, starlette_http_exception_handler)
     app.add_exception_handler(Exception, generic_exception_handler)

@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from pydantic import validator
 
 
 class Settings(BaseSettings):
@@ -33,6 +34,34 @@ class Settings(BaseSettings):
     # # Google Cloud Services
     # GOOGLE_APPLICATION_CREDENTIALS: str
     # GEMINI_API_KEY: str
+
+    # pgAdmin Settings (for Docker Compose)
+    PGADMIN_DEFAULT_EMAIL: str
+    PGADMIN_DEFAULT_PASSWORD: str
+    PGADMIN_CONFIG_SERVER_MODE: bool
+    PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: bool
+
+    # Add these missing fields
+    ALLOWED_HOSTS: list[str] = ["localhost", "127.0.0.1"]
+    TIMEZONE: str = "UTC"
+    
+    # Rate limiting
+    RATE_LIMIT_REQUESTS: int = 100
+    RATE_LIMIT_WINDOW: int = 60  # seconds
+    
+    # File upload
+    MAX_FILE_SIZE: int = 10 * 1024 * 1024  # 10MB
+    ALLOWED_FILE_TYPES: list[str] = ["image/jpeg", "image/png", "application/pdf"]
+    
+    # Logging
+    LOG_LEVEL: str = "INFO"
+    
+    # Add validation
+    @validator("CORS_ORIGINS", pre=True)
+    def parse_cors_origins(cls, v):
+        if isinstance(v, str):
+            return [origin.strip() for origin in v.split(",")]
+        return v
 
     class Config:
         env_file = ".env"

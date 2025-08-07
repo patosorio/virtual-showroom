@@ -5,6 +5,8 @@ from typing import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 
 from .core.config import settings
 from .core.database import Base, engine, init_db
@@ -19,10 +21,15 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Import models to register them with SQLAlchemy (when they are created)
-# from .models.user import User
-# from .models.collection import Collection
-# from .models.product import Product
-# from .models.file import File
+from .models.collection import Collection
+from .models.product import (
+    Product,
+    ProductVariant,
+    ProductImage,
+    TechnicalSpecification,
+    TechnicalDrawing,
+    SizeChart
+)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -46,7 +53,7 @@ async def lifespan(app: FastAPI):
         logger.error(f"Failed to initialize database: {str(e)}")
         raise
     
-    logger.info(f"Virtual Showroom API startup completed in {settings.ENV} mode")
+    logger.info("Virtual Showroom API startup completed")
     
     yield
     
@@ -62,7 +69,7 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs" if settings.ENV == "development" else None,
     redoc_url="/redoc" if settings.ENV == "development" else None,
-    lifespan=lifespan,
+    lifespan=lifespan
 )
 
 # Setup global exception handlers
@@ -101,6 +108,13 @@ app.add_middleware(
     expose_headers=["Content-Length", "X-Total-Count"],
     max_age=600,  # Cache preflight requests for 10 minutes
 )
+
+# Add TrustedHost middleware
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1", "*.yourdomain.com"])
+
+# For production
+if settings.ENV == "production":
+    app.add_middleware(HTTPSRedirectMiddleware)
 
 # Include API routes
 from .core.api import router as api_router

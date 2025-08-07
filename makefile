@@ -1,5 +1,5 @@
 dev-backend:
-	cd backend && source venv/bin/activate && fastapi dev main.py
+	cd backend && source venv/bin/activate && fastapi dev app/main.py
 
 dev-frontend:
 	cd client && npm run dev

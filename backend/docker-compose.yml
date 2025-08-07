@@ -21,7 +21,35 @@ services:
       retries: 5
     # Restart policy
     restart: unless-stopped
+    networks:
+      - virtual-showroom-network
+
+  virtual-showroom-pgadmin:
+    container_name: virtual-showroom-pgadmin
+    image: dpage/pgadmin4:latest
+    ports:
+      - "5051:80"
+    env_file:
+      - .env
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
+      - PGADMIN_CONFIG_SERVER_MODE=${PGADMIN_CONFIG_SERVER_MODE}
+      - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=${PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED}
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - virtual-showroom-db
+    restart: unless-stopped
+    networks:
+      - virtual-showroom-network
 
 volumes:
   virtual_showroom_postgres_data:
     driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  virtual-showroom-network:
+    driver: bridge
