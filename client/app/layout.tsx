@@ -8,6 +8,7 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "MEDINA Swimwear - Virtual Designer Showroom",
   description: "Premium swimwear collections with technical specifications and virtual showroom experience",
+    generator: 'v0.dev'
 }
 
 export default function RootLayout({
