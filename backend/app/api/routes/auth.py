@@ -25,7 +25,7 @@ router = APIRouter()
     "/login",
     response_model=LoginResponse,
     summary="User login",
-    description="Authenticate user with Firebase token"
+    description="Authenticate user with Firebase token and create/get user"
 )
 async def login(
     login_data: LoginRequest,
@@ -33,30 +33,57 @@ async def login(
 ):
     """User login with Firebase token."""
     try:
-        # This would validate Firebase token and create/get user
-        # For now, return placeholder response
+        from app.core.firebase.auth import verify_firebase_token
+        from app.schemas.auth import UserCreate
+        
+        # Verify Firebase token
+        firebase_user = await verify_firebase_token(login_data.id_token)
+        
+        # Get or create user in our database
+        service = AuthService(db)
+        
+        try:
+            # Try to get existing user
+            user = await service.get_user_by_firebase_uid(firebase_user["uid"])
+        except Exception:
+            # User doesn't exist, create new one
+            user_data = UserCreate(
+                email=firebase_user.get("email"),
+                firebase_uid=firebase_user["uid"],
+                display_name=firebase_user.get("name") or firebase_user.get("email", "").split("@")[0],
+                photo_url=firebase_user.get("picture"),
+                role="user",
+                is_active=True
+            )
+            user = await service.create_user(user_data)
+            await db.commit()  # Commit the user creation
+        
+        # Record login activity
+        await service.record_login(user.id)
+        await db.commit()  # Commit the login activity
+        
         return LoginResponse(
-            access_token="placeholder_token",
+            access_token=login_data.id_token,  # We'll use the Firebase token
             token_type="bearer",
             expires_in=3600,
             user=UserResponse(
-                id=UUID(),
-                email="user@example.com",
-                firebase_uid="firebase_uid",
-                role="user",
-                is_active=True,
-                display_name="User Name",
-                created_at="2024-01-01T00:00:00Z",
-                updated_at="2024-01-01T00:00:00Z"
+                id=user.id,
+                email=user.email,
+                firebase_uid=user.firebase_uid,
+                role=user.role,
+                is_active=user.is_active,
+                display_name=user.display_name,
+                created_at=user.created_at.isoformat(),
+                updated_at=user.updated_at.isoformat()
             )
         )
         
     except HTTPException as e:
-        raise HTTPException(status_code=e.status_code, detail=e.detail)
+        raise e
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred during authentication"
+            detail=f"An error occurred during authentication: {str(e)}"
         )
 
 
@@ -72,9 +99,38 @@ async def get_current_user_profile(
 ):
     """Get current user profile."""
     try:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"Getting profile for user: {current_user}")
+        
+        from app.schemas.auth import UserCreate
+        
         service = AuthService(db)
         
-        user = await service.get_user_by_firebase_uid(current_user["uid"])
+        try:
+            # Try to get existing user
+            logger.info(f"Looking for user with Firebase UID: {current_user['uid']}")
+            user = await service.get_user_by_firebase_uid(current_user["uid"])
+            logger.info(f"Found existing user: {user.email}")
+        except Exception as e:
+            logger.info(f"User not found, creating new user. Error: {str(e)}")
+            # User doesn't exist in our database, create them
+            user_data = UserCreate(
+                email=current_user.get("email"),
+                firebase_uid=current_user["uid"],
+                display_name=current_user.get("name") or current_user.get("email", "").split("@")[0],
+                photo_url=current_user.get("picture"),
+                role="user",
+                is_active=True
+            )
+            logger.info(f"Creating user with data: {user_data.model_dump()}")
+            user = await service.create_user(user_data)
+            await db.commit()  # Commit the user creation
+            logger.info(f"Created new user: {user.email}")
+            
+        # Record login activity
+        await service.record_login(user.id)
+        await db.commit()  # Commit the login activity
         
         return UserProfile(
             id=user.id,
@@ -89,11 +145,14 @@ async def get_current_user_profile(
         )
         
     except HTTPException as e:
-        raise HTTPException(status_code=e.status_code, detail=e.detail)
+        raise e
     except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error in get_current_user_profile: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred while retrieving user profile"
+            detail=f"An error occurred while retrieving user profile: {str(e)}"
         )
 
 
