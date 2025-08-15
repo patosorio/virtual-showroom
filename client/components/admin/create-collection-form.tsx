@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -11,6 +12,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, Save } from "lucide-react"
 import Link from "next/link"
+import { useCreateCollection } from "@/hooks/useCollections"
+import type { CollectionCreate } from "@/types/collections"
+import { toast } from "sonner"
 
 export function CreateCollectionForm() {
   const [formData, setFormData] = useState({
@@ -20,12 +24,65 @@ export function CreateCollectionForm() {
     description: "",
     orderStartDate: "",
     orderEndDate: "",
+    slug: ""
   })
+
+  const router = useRouter()
+  const { mutate: createCollection, isPending } = useCreateCollection({
+    onSuccess: () => {
+      router.push("/admin/collections")
+    }
+  })
+
+  // Generate slug from name
+  const generateSlug = (name: string) => {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+  }
+
+  // Update slug when name changes
+  const handleNameChange = (name: string) => {
+    setFormData(prev => ({
+      ...prev,
+      name,
+      slug: generateSlug(name)
+    }))
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle form submission
-    console.log("Creating collection:", formData)
+
+    console.log('🚀 SUBMIT - Form data before validation:', formData);
+    console.log('🚀 SUBMIT - Season value specifically:', formData.season);
+    console.log('🚀 SUBMIT - Season type:', typeof formData.season);
+
+    // Validate required fields
+    if (!formData.name || !formData.season || !formData.year || !formData.description) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    // Validate season
+    const validSeasons = ['Spring', 'Summer', 'Fall', 'Winter'];
+    if (!validSeasons.includes(formData.season)) {
+      toast.error('Please select a valid season');
+      return;
+    }
+    
+    const collectionData: CollectionCreate = {
+      name: formData.name.trim(),
+      slug: (formData.slug || generateSlug(formData.name)).trim(),
+      season: formData.season, // Already validated above
+      year: formData.year,
+      description: formData.description.trim(),
+      order_start_date: formData.orderStartDate,
+      order_end_date: formData.orderEndDate,
+      is_published: true  // Create as published so it shows up immediately
+    }
+
+    createCollection(collectionData)
   }
 
   const handleInputChange = (field: string, value: string | number) => {
@@ -66,7 +123,7 @@ export function CreateCollectionForm() {
                     <Input
                       id="name"
                       value={formData.name}
-                      onChange={(e) => handleInputChange("name", e.target.value)}
+                      onChange={(e) => handleNameChange(e.target.value)}
                       placeholder="e.g., Ocean Breeze Collection"
                       required
                     />
@@ -76,16 +133,22 @@ export function CreateCollectionForm() {
                     <Label htmlFor="season" className="text-sm font-medium uppercase tracking-wide">
                       Season
                     </Label>
-                    <Select value={formData.season} onValueChange={(value) => handleInputChange("season", value)}>
+                    <Select 
+                      value={formData.season}
+                      onValueChange={(value) => {
+                        console.log('Season changed to:', value);
+                        setFormData(prev => ({ ...prev, season: value }));
+                      }}
+                      required
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select season" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="spring">Spring</SelectItem>
-                        <SelectItem value="summer">Summer</SelectItem>
-                        <SelectItem value="high-summer">High Summer</SelectItem>
-                        <SelectItem value="fall">Fall</SelectItem>
-                        <SelectItem value="winter">Winter</SelectItem>
+                        <SelectItem value="Spring">Spring</SelectItem>
+                        <SelectItem value="Summer">Summer</SelectItem>
+                        <SelectItem value="Fall">Fall</SelectItem>
+                        <SelectItem value="Winter">Winter</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -139,9 +202,13 @@ export function CreateCollectionForm() {
                 </div>
 
                 <div className="flex gap-4 pt-6">
-                  <Button type="submit" className="bg-gray-900 hover:bg-gray-800">
+                  <Button 
+                    type="submit" 
+                    className="bg-gray-900 hover:bg-gray-800"
+                    disabled={isPending}
+                  >
                     <Save className="mr-2 h-4 w-4" />
-                    Create Collection
+                    {isPending ? "Creating..." : "Create Collection"}
                   </Button>
                   <Link href="/admin/collections">
                     <Button variant="outline">Cancel</Button>

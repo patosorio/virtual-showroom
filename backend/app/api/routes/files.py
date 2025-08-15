@@ -62,7 +62,7 @@ async def upload_file(
             file_content=file.file,
             original_filename=file.filename,
             upload_request=upload_request,
-            user_id=UUID(current_user["uid"])
+            user_id=current_user["uid"]
         )
         
         return result
@@ -113,7 +113,7 @@ async def list_files(
             filters=filters,
             skip=skip,
             limit=limit,
-            user_id=UUID(current_user["uid"]) if current_user else None
+            user_id=current_user["uid"] if current_user else None
         )
         
         # Convert to response models
@@ -183,7 +183,7 @@ async def delete_file(
         
         await service.delete(
             id=file_id,
-            user_id=UUID(current_user["uid"])
+            user_id=current_user["uid"]
         )
         
     except HTTPException as e:
@@ -250,7 +250,7 @@ async def process_image(
         result = await service.process_image(
             file_id=file_id,
             processing_request=processing_request,
-            user_id=UUID(current_user["uid"])
+            user_id=current_user["uid"]
         )
         
         return result
@@ -283,7 +283,7 @@ async def process_document(
         result = await service.process_document(
             file_id=file_id,
             processing_request=processing_request,
-            user_id=UUID(current_user["uid"])
+            user_id=current_user["uid"]
         )
         
         return result
@@ -314,7 +314,7 @@ async def batch_file_operations(
         
         result = await service.batch_operation(
             operation=operation,
-            user_id=UUID(current_user["uid"])
+            user_id=current_user["uid"]
         )
         
         return result

@@ -1,22 +1,33 @@
 "use client"
 
-import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { Plus, Eye, Ruler, BookOpen, Calendar, Package } from "lucide-react"
-import { mockCollections } from "@/lib/mock-data"
-import type { Collection } from "@/types"
+import { LoadingSpinner } from "@/components/ui/loading-spinner"
+import { Plus, Eye, Ruler, BookOpen, Calendar, Package, AlertCircle, RefreshCw } from "lucide-react"
+import { useCollections } from "@/hooks/useCollections"
+import { transformCollectionsList } from "@/lib/transformers/collections"
+import type { Collection } from "@/types/collections"
 
 export function CollectionsGrid() {
-  const [collections] = useState(mockCollections)
+  const { 
+    data: collectionsResponse, 
+    isLoading, 
+    error, 
+    refetch 
+  } = useCollections({
+    limit: 20,
+    is_published: true, // Only show published collections for non-admin users
+  })
+
+  const collections = collectionsResponse?.items ? transformCollectionsList(collectionsResponse.items) : []
 
   return (
     <div className="h-screen bg-white flex flex-col overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex flex-col h-full">
-        {/* Fixed Header - Mobile Responsive */}
+
         <div className="flex-shrink-0 py-4 sm:py-6 lg:py-8 border-b border-gray-200">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -38,11 +49,107 @@ export function CollectionsGrid() {
 
         {/* Collections Grid - Mobile First */}
         <div className="flex-1 py-4 sm:py-6 lg:py-8 overflow-y-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-            {collections.map((collection) => (
-              <CollectionCard key={collection.id} collection={collection} />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <LoadingSpinner size="lg" />
+                <p className="mt-4 text-gray-600">Loading collections...</p>
+              </div>
+            </div>
+          ) : error ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center max-w-md">
+                <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Unable to connect to server
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  There's a connection issue with the backend server. Please check if the server is running and try again.
+                </p>
+                <div className="space-y-2">
+                  <Button 
+                    onClick={() => refetch()} 
+                    className="bg-gray-900 hover:bg-gray-800 w-full"
+                  >
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Try Again
+                  </Button>
+                  <p className="text-xs text-gray-500">
+                    Error: {error?.message || 'Network connection failed'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : collections.length === 0 ? (
+            <div className="flex items-center justify-center h-full min-h-[60vh]">
+              <div className="text-center max-w-lg px-6">
+                {/* Beautiful Empty State Icon */}
+                <div className="relative mb-8">
+                  <div className="w-24 h-24 mx-auto bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center">
+                    <Package className="h-12 w-12 text-gray-400" />
+                  </div>
+                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-gray-900 rounded-full flex items-center justify-center">
+                    <Plus className="h-4 w-4 text-white" />
+                  </div>
+                </div>
+
+                {/* Engaging Copy */}
+                <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                  Ready to showcase your collections?
+                </h3>
+                <p className="text-gray-600 mb-8 leading-relaxed">
+                  Transform your fashion designs into immersive digital experiences. 
+                  Create your first collection and start building your virtual showroom.
+                </p>
+
+                {/* Primary CTA */}
+                <div className="space-y-4">
+                  <Link href="/admin/collections/new">
+                    <Button className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 text-lg font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-300">
+                      <Plus className="mr-3 h-5 w-5" />
+                      Create Your First Collection
+                    </Button>
+                  </Link>
+                  
+                  {/* Secondary info */}
+                  <p className="text-sm text-gray-500">
+                    You can upload products, technical files, and create stunning lookbooks
+                  </p>
+                </div>
+
+                {/* Feature highlights */}
+                <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
+                  <div className="space-y-2">
+                    <div className="w-12 h-12 bg-gray-100 rounded-lg mx-auto flex items-center justify-center">
+                      <Eye className="h-6 w-6 text-gray-600" />
+                    </div>
+                    <h4 className="font-medium text-gray-900">Virtual Showroom</h4>
+                    <p className="text-sm text-gray-500">Interactive product displays</p>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="w-12 h-12 bg-gray-100 rounded-lg mx-auto flex items-center justify-center">
+                      <Ruler className="h-6 w-6 text-gray-600" />
+                    </div>
+                    <h4 className="font-medium text-gray-900">Technical Files</h4>
+                    <p className="text-sm text-gray-500">Detailed specifications</p>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="w-12 h-12 bg-gray-100 rounded-lg mx-auto flex items-center justify-center">
+                      <BookOpen className="h-6 w-6 text-gray-600" />
+                    </div>
+                    <h4 className="font-medium text-gray-900">Lookbooks</h4>
+                    <p className="text-sm text-gray-500">Beautiful galleries</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+              {collections.map((collection) => (
+                <CollectionCard key={collection.id} collection={collection} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

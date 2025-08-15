@@ -41,7 +41,7 @@ class BaseService(Generic[ModelType, RepositoryType], ABC):
             model: Model class for type hints
         """
         self.db = db
-        self.repository = repository(db, model)
+        self.repository = repository(db)
         self.model = model
 
     async def get_by_id(
@@ -162,7 +162,7 @@ class BaseService(Generic[ModelType, RepositoryType], ABC):
     async def create(
         self, 
         data: Dict[str, Any], 
-        user_id: Optional[UUID] = None
+        user_id: Optional[str] = None  # Firebase UID
     ) -> ModelType:
         """
         Create new entity with business validation.

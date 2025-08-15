@@ -150,7 +150,11 @@ class BaseRepository(Generic[ModelType], ABC):
             query = self._apply_eager_loading(query, load_relations)
         
         result = await self.db.execute(query)
-        return result.scalars().all()
+        # Use unique() when eager loading to handle JOINs properly
+        if load_relations:
+            return result.scalars().unique().all()
+        else:
+            return result.scalars().all()
 
     async def count(
         self,
@@ -178,7 +182,7 @@ class BaseRepository(Generic[ModelType], ABC):
         result = await self.db.execute(query)
         return result.scalar()
 
-    async def create(self, data: Dict[str, Any], user_id: Optional[UUID] = None) -> ModelType:
+    async def create(self, data: Dict[str, Any], user_id: Optional[str] = None) -> ModelType:  # Firebase UID
         """
         Create a new record.
         

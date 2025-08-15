@@ -172,9 +172,9 @@ async def update_current_user_profile(
         service = AuthService(db)
         
         user = await service.update_user_profile(
-            user_id=UUID(current_user["uid"]),
+            user_id=current_user["uid"],
             data=profile_data,
-            current_user_id=UUID(current_user["uid"])
+            current_user_id=current_user["uid"]
         )
         
         return UserResponse.model_validate(user)

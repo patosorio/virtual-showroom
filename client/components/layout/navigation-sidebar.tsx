@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import {
@@ -18,7 +18,9 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { mockCollections } from "@/lib/mock-data"
+import { useCollections } from "@/hooks/useCollections"
+import { transformCollectionsList } from "@/lib/transformers/collections"
+import type { Collection } from "@/types/collections"
 
 interface NavigationSidebarProps {
   isOpen: boolean
@@ -26,8 +28,39 @@ interface NavigationSidebarProps {
 }
 
 export function NavigationSidebar({ isOpen, onToggle }: NavigationSidebarProps) {
-  const [expandedCollections, setExpandedCollections] = useState<Set<string>>(new Set(["coral-reef"]))
-  const [activeSection, setActiveSection] = useState("coral-reef-showroom")
+  const { data: collectionsResponse } = useCollections({
+    limit: 100,
+    is_published: undefined
+  })
+
+  const [expandedCollections, setExpandedCollections] = useState<Set<string>>(new Set())
+  const [expandedYears, setExpandedYears] = useState<Set<number>>(new Set([new Date().getFullYear()]))
+  const [activeSection, setActiveSection] = useState("")
+
+  const collectionsByYear = useMemo(() => {
+    if (!collectionsResponse?.items) return new Map<number, Collection[]>()
+    
+    const collections = transformCollectionsList(collectionsResponse.items)
+    const grouped = new Map<number, Collection[]>()
+    
+    collections.forEach((collection) => {
+      const year = collection.year
+      if (!grouped.has(year)) {
+        grouped.set(year, [])
+      }
+      grouped.get(year)!.push(collection)
+    })
+    
+    grouped.forEach((collections) => {
+      collections.sort((a, b) => a.name.localeCompare(b.name))
+    })
+    
+    return grouped
+  }, [collectionsResponse])
+
+  const sortedYears = useMemo(() => {
+    return Array.from(collectionsByYear.keys()).sort((a, b) => b - a)
+  }, [collectionsByYear])
 
   const toggleCollection = (collectionId: string) => {
     const newExpanded = new Set(expandedCollections)
@@ -37,6 +70,16 @@ export function NavigationSidebar({ isOpen, onToggle }: NavigationSidebarProps) 
       newExpanded.add(collectionId)
     }
     setExpandedCollections(newExpanded)
+  }
+
+  const toggleYear = (year: number) => {
+    const newExpanded = new Set(expandedYears)
+    if (newExpanded.has(year)) {
+      newExpanded.delete(year)
+    } else {
+      newExpanded.add(year)
+    }
+    setExpandedYears(newExpanded)
   }
 
   const profileItems = [
@@ -108,66 +151,88 @@ export function NavigationSidebar({ isOpen, onToggle }: NavigationSidebarProps) 
             <div>
               <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Collections</h3>
               <div className="space-y-2">
-                {mockCollections.map((collection) => (
-                  <div key={collection.id}>
-                    {/* Collection Header */}
+                {sortedYears.map((year) => (
+                  <div key={year}>
+                    {/* Year Header */}
                     <button
-                      className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-gray-800 hover:text-white transition-colors"
-                      onClick={() => toggleCollection(collection.id)}
+                      className="flex items-center justify-between w-full px-3 py-2 text-sm font-bold text-gray-200 rounded-md hover:bg-gray-800 hover:text-white transition-colors"
+                      onClick={() => toggleYear(year)}
                     >
-                      <div className="flex items-center">
-                        <Layers className="mr-3 h-4 w-4" />
-                        <span className="uppercase tracking-wide text-xs">{collection.name}</span>
-                      </div>
-                      {expandedCollections.has(collection.id) ? (
+                      <span className="uppercase tracking-wide text-sm">{year}</span>
+                      {expandedYears.has(year) ? (
                         <ChevronDown className="h-4 w-4" />
                       ) : (
                         <ChevronRight className="h-4 w-4" />
                       )}
                     </button>
 
-                    {/* Collection Sub-menu */}
-                    {expandedCollections.has(collection.id) && (
-                      <div className="ml-6 mt-2 space-y-1">
-                        <Link
-                          href={`/collections/${collection.id}/showroom`}
-                          className={cn(
-                            "flex items-center px-3 py-2 text-sm rounded-md transition-colors",
-                            activeSection === `${collection.id}-showroom`
-                              ? "bg-gray-800 text-white"
-                              : "text-gray-400 hover:bg-gray-800 hover:text-white",
-                          )}
-                          onClick={() => setActiveSection(`${collection.id}-showroom`)}
-                        >
-                          <Eye className="mr-3 h-3 w-3" />
-                          Virtual Showroom
-                        </Link>
-                        <Link
-                          href={`/collections/${collection.id}/technical`}
-                          className={cn(
-                            "flex items-center px-3 py-2 text-sm rounded-md transition-colors",
-                            activeSection === `${collection.id}-technical`
-                              ? "bg-gray-800 text-white"
-                              : "text-gray-400 hover:bg-gray-800 hover:text-white",
-                          )}
-                          onClick={() => setActiveSection(`${collection.id}-technical`)}
-                        >
-                          <Ruler className="mr-3 h-3 w-3" />
-                          Technical Files
-                        </Link>
-                        <Link
-                          href={`/collections/${collection.id}/lookbook`}
-                          className={cn(
-                            "flex items-center px-3 py-2 text-sm rounded-md transition-colors",
-                            activeSection === `${collection.id}-lookbook`
-                              ? "bg-gray-800 text-white"
-                              : "text-gray-400 hover:bg-gray-800 hover:text-white",
-                          )}
-                          onClick={() => setActiveSection(`${collection.id}-lookbook`)}
-                        >
-                          <BookOpen className="mr-3 h-3 w-3" />
-                          Lookbook
-                        </Link>
+                    {/* Collections for this year */}
+                    {expandedYears.has(year) && collectionsByYear.get(year) && (
+                      <div className="ml-4 mt-2 space-y-1">
+                        {collectionsByYear.get(year)!.map((collection) => (
+                          <div key={collection.id}>
+                            {/* Collection Header */}
+                            <button
+                              className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-gray-800 hover:text-white transition-colors"
+                              onClick={() => toggleCollection(collection.id)}
+                            >
+                              <div className="flex items-center">
+                                <Layers className="mr-3 h-4 w-4" />
+                                <span className="uppercase tracking-wide text-xs">{collection.name}</span>
+                              </div>
+                              {expandedCollections.has(collection.id) ? (
+                                <ChevronDown className="h-4 w-4" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4" />
+                              )}
+                            </button>
+
+                            {/* Collection Sub-menu */}
+                            {expandedCollections.has(collection.id) && (
+                              <div className="ml-6 mt-2 space-y-1">
+                                <Link
+                                  href={`/collections/${collection.id}/showroom`}
+                                  className={cn(
+                                    "flex items-center px-3 py-2 text-sm rounded-md transition-colors",
+                                    activeSection === `${collection.id}-showroom`
+                                      ? "bg-gray-800 text-white"
+                                      : "text-gray-400 hover:bg-gray-800 hover:text-white",
+                                  )}
+                                  onClick={() => setActiveSection(`${collection.id}-showroom`)}
+                                >
+                                  <Eye className="mr-3 h-3 w-3" />
+                                  Virtual Showroom
+                                </Link>
+                                <Link
+                                  href={`/collections/${collection.id}/technical`}
+                                  className={cn(
+                                    "flex items-center px-3 py-2 text-sm rounded-md transition-colors",
+                                    activeSection === `${collection.id}-technical`
+                                      ? "bg-gray-800 text-white"
+                                      : "text-gray-400 hover:bg-gray-800 hover:text-white",
+                                  )}
+                                  onClick={() => setActiveSection(`${collection.id}-technical`)}
+                                >
+                                  <Ruler className="mr-3 h-3 w-3" />
+                                  Technical Files
+                                </Link>
+                                <Link
+                                  href={`/collections/${collection.id}/lookbook`}
+                                  className={cn(
+                                    "flex items-center px-3 py-2 text-sm rounded-md transition-colors",
+                                    activeSection === `${collection.id}-lookbook`
+                                      ? "bg-gray-800 text-white"
+                                      : "text-gray-400 hover:bg-gray-800 hover:text-white",
+                                  )}
+                                  onClick={() => setActiveSection(`${collection.id}-lookbook`)}
+                                >
+                                  <BookOpen className="mr-3 h-3 w-3" />
+                                  Lookbook
+                                </Link>
+                              </div>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>

@@ -34,9 +34,13 @@ apiClient.interceptors.response.use(
       // Unauthorized - redirect to login
       window.location.href = '/login';
     } else if (error.response?.status >= 500) {
-      toast.error('Server error. Please try again later.');
+      console.error('Server error:', error.response?.data || error.message);
+      toast.error('Server error. Please check if the backend is running.');
     } else if (error.response?.data?.detail) {
       toast.error(error.response.data.detail);
+    } else if (error.code === 'ERR_NETWORK') {
+      console.error('Network error:', error.message);
+      toast.error('Cannot connect to server. Please check if the backend is running.');
     }
     return Promise.reject(error);
   }

@@ -19,7 +19,6 @@ from app.schemas.collection import (
     CollectionAnalytics
 )
 from app.schemas.base import PaginatedResponse, PaginationParams
-from fastapi import HTTPException
 
 router = APIRouter()
 
@@ -35,7 +34,7 @@ async def list_collections(
     limit: int = Query(20, ge=1, le=100, description="Number of items to return"),
     season: Optional[str] = Query(None, description="Filter by season"),
     year: Optional[int] = Query(None, description="Filter by year"),
-    status: Optional[str] = Query(None, description="Filter by status"),
+    collection_status: Optional[str] = Query(None, description="Filter by status"),
     is_published: Optional[bool] = Query(None, description="Filter by published status"),
     query: Optional[str] = Query(None, description="Search query"),
     has_products: Optional[bool] = Query(None, description="Filter collections with/without products"),
@@ -50,7 +49,7 @@ async def list_collections(
         filters = CollectionListFilters(
             season=season,
             year=year,
-            status=status,
+            status=collection_status,
             is_published=is_published,
             query=query,
             has_products=has_products
@@ -61,14 +60,41 @@ async def list_collections(
             filters=filters,
             skip=skip,
             limit=limit,
-            user_id=UUID(current_user["uid"]) if current_user else None
+            user_id=current_user["uid"] if current_user else None
         )
         
-        # Convert to response models
-        collection_responses = [
-            CollectionResponse.model_validate(collection)
-            for collection in collections
-        ]
+        # Convert to response models manually to avoid relationship access issues
+        collection_responses = []
+        for collection in collections:
+            response_data = {
+                "id": collection.id,
+                "name": collection.name,
+                "slug": collection.slug,
+                "season": collection.season,
+                "year": collection.year,
+                "description": collection.description,
+                "short_description": collection.short_description,
+                "order_start_date": collection.order_start_date,
+                "order_end_date": collection.order_end_date,
+                "seo_title": collection.seo_title,
+                "seo_description": collection.seo_description,
+                "metadata": collection.extra_data if isinstance(collection.extra_data, dict) else {},  # Map extra_data to metadata
+                "status": collection.status,
+                "is_published": collection.is_published,
+                "product_count": collection.product_count,
+                "is_order_period_active": collection.is_order_period_active,
+                "full_name": collection.full_name,
+                "created_at": collection.created_at,
+                "updated_at": collection.updated_at,
+                "created_by": collection.created_by,
+                "updated_by": collection.updated_by,
+                "is_deleted": collection.is_deleted,
+                "deleted_at": collection.deleted_at,
+                "notes": collection.notes,
+                "products": None,  # Don't include relationships for list
+                "files": None     # Don't include relationships for list
+            }
+            collection_responses.append(CollectionResponse.model_validate(response_data))
         
         return PaginatedResponse.create(
             items=collection_responses,
@@ -80,9 +106,12 @@ async def list_collections(
     except HTTPException as e:
         raise HTTPException(status_code=e.status_code, detail=e.detail)
     except Exception as e:
+        import traceback
+        print("Error in list_collections:", str(e))
+        print("Traceback:", traceback.format_exc())
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred while listing collections"
+            detail=f"An error occurred while listing collections: {str(e)}"
         )
 
 
@@ -104,17 +133,50 @@ async def create_collection(
         
         collection = await service.create_collection(
             data=collection_data,
-            user_id=UUID(current_user["uid"])
+            user_id=current_user["uid"]
         )
         
-        return CollectionResponse.model_validate(collection)
+        # Convert to response dict manually to avoid relationship access issues
+        response_data = {
+            "id": collection.id,
+            "name": collection.name,
+            "slug": collection.slug,
+            "season": collection.season,
+            "year": collection.year,
+            "description": collection.description,
+            "short_description": collection.short_description,
+            "order_start_date": collection.order_start_date,
+            "order_end_date": collection.order_end_date,
+            "seo_title": collection.seo_title,
+            "seo_description": collection.seo_description,
+            "metadata": collection.extra_data if isinstance(collection.extra_data, dict) else {},
+            "status": collection.status,
+            "is_published": collection.is_published,
+            "product_count": collection.product_count,
+            "is_order_period_active": collection.is_order_period_active,
+            "full_name": collection.full_name,
+            "created_at": collection.created_at,
+            "updated_at": collection.updated_at,
+            "created_by": collection.created_by,
+            "updated_by": collection.updated_by,
+            "is_deleted": collection.is_deleted,
+            "deleted_at": collection.deleted_at,
+            "notes": collection.notes,
+            "products": None,  # Don't include relationships for create
+            "files": None     # Don't include relationships for create
+        }
+        
+        return CollectionResponse.model_validate(response_data)
         
     except HTTPException as e:
         raise HTTPException(status_code=e.status_code, detail=e.detail)
     except Exception as e:
+        import traceback
+        print("Error in create_collection:", str(e))
+        print("Traceback:", traceback.format_exc())
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred while creating the collection"
+            detail=f"An error occurred while creating the collection: {str(e)}"
         )
 
 

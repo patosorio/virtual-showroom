@@ -1,4 +1,5 @@
-import type { Collection, Product } from "@/types"
+import type { Collection } from "@/types/collections"
+import type { Product } from "@/types"
 
 export const mockProducts: Product[] = [
   {
@@ -237,29 +238,5 @@ export const mockCollections: Collection[] = [
     },
     description: "Restoring and protecting the Mexican reef.",
     products: mockProducts,
-  },
-  {
-    id: "ocean-depths",
-    name: "Ocean Depths Collection",
-    season: "Fall",
-    year: 2021,
-    orderDates: {
-      start: "1st December",
-      end: "15th December 2021",
-    },
-    description: "Inspired by the mysterious depths of the ocean.",
-    products: mockProducts.slice(0, 2), // Subset for demo
-  },
-  {
-    id: "summer-breeze",
-    name: "Summer Breeze Collection",
-    season: "Spring",
-    year: 2022,
-    orderDates: {
-      start: "1st March",
-      end: "15th March 2022",
-    },
-    description: "Light and airy designs for the perfect summer day.",
-    products: [mockProducts[2]], // Just the one-piece for demo
   },
 ]

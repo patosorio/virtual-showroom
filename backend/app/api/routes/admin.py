@@ -144,7 +144,7 @@ async def bulk_import_data(
         
         result = await service.bulk_import_data(
             import_request=import_request,
-            admin_user_id=UUID(current_user["uid"])
+            admin_user_id=current_user["uid"]
         )
         
         return result
@@ -175,7 +175,7 @@ async def bulk_export_data(
         
         result = await service.bulk_export_data(
             export_request=export_request,
-            admin_user_id=UUID(current_user["uid"])
+            admin_user_id=current_user["uid"]
         )
         
         return result

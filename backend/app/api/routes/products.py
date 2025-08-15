@@ -75,7 +75,7 @@ async def list_products(
             skip=skip,
             limit=limit,
             order_by=order_by,
-            user_id=UUID(current_user["uid"]) if current_user else None
+            user_id=current_user["uid"] if current_user else None
         )
         
         # Convert to summary response models
@@ -118,7 +118,7 @@ async def create_product(
         
         product = await service.create_product_with_variants(
             data=product_data,
-            user_id=UUID(current_user["uid"])
+            user_id=current_user["uid"]
         )
         
         return ProductResponse.model_validate(product)
@@ -207,7 +207,7 @@ async def update_product(
         product = await service.update_product(
             product_id=product_id,
             data=product_data,
-            user_id=UUID(current_user["uid"])
+            user_id=current_user["uid"]
         )
         
         return ProductResponse.model_validate(product)
@@ -238,7 +238,7 @@ async def delete_product(
         
         await service.delete(
             id=product_id,
-            user_id=UUID(current_user["uid"])
+            user_id=current_user["uid"]
         )
         
     except HTTPException as e:
@@ -382,7 +382,7 @@ async def update_product_status(
         product = await service.update_product_status(
             product_id=product_id,
             status=status,
-            user_id=UUID(current_user["uid"])
+            user_id=current_user["uid"]
         )
         
         return ProductResponse.model_validate(product)
@@ -413,7 +413,7 @@ async def toggle_featured_status(
         
         product = await service.toggle_featured_status(
             product_id=product_id,
-            user_id=UUID(current_user["uid"])
+            user_id=current_user["uid"]
         )
         
         return ProductResponse.model_validate(product)
@@ -449,7 +449,7 @@ async def add_product_variant(
         variant = await service.add_product_variant(
             product_id=product_id,
             variant_data=variant_data,
-            user_id=UUID(current_user["uid"])
+            user_id=current_user["uid"]
         )
         
         return ProductVariantResponse.model_validate(variant)
@@ -482,7 +482,7 @@ async def update_product_variant(
         variant = await service.update_product_variant(
             variant_id=variant_id,
             variant_data=variant_data,
-            user_id=UUID(current_user["uid"])
+            user_id=current_user["uid"]
         )
         
         return ProductVariantResponse.model_validate(variant)
@@ -535,7 +535,7 @@ async def upload_product_image(
         image = await service.add_product_image(
             product_id=product_id,
             image_data=image_data,
-            user_id=UUID(current_user["uid"])
+            user_id=current_user["uid"]
         )
         
         return ProductImageResponse.model_validate(image)
@@ -571,7 +571,7 @@ async def add_technical_specification(
         specification = await service.add_technical_specification(
             product_id=product_id,
             spec_data=spec_data,
-            user_id=UUID(current_user["uid"])
+            user_id=current_user["uid"]
         )
         
         return TechnicalSpecificationResponse.model_validate(specification)
@@ -607,7 +607,7 @@ async def create_size_chart(
         size_chart = await service.create_size_chart(
             product_id=product_id,
             size_chart_data=size_chart_data,
-            user_id=UUID(current_user["uid"])
+            user_id=current_user["uid"]
         )
         
         return SizeChartResponse.model_validate(size_chart)

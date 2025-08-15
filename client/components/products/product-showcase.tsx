@@ -4,7 +4,8 @@ import { useState } from "react"
 import Image from "next/image"
 import { ProductCard } from "./product-card"
 import { ProductDetail } from "./product-detail"
-import type { Collection, Product } from "@/types"
+import type { Collection } from "@/types/collections"
+import type { Product } from "@/types"
 
 interface ProductShowcaseProps {
   collection: Collection

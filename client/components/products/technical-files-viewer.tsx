@@ -5,7 +5,7 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Download, Ruler } from "lucide-react"
-import type { Collection } from "@/types"
+import type { Collection } from "@/types/collections"
 
 interface TechnicalFilesViewerProps {
   collection: Collection

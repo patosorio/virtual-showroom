@@ -32,8 +32,8 @@ class BaseResponseSchema(BaseSchema):
     id: UUID
     created_at: datetime
     updated_at: datetime
-    created_by: Optional[UUID] = None
-    updated_by: Optional[UUID] = None
+    created_by: Optional[str] = None  # Firebase UID
+    updated_by: Optional[str] = None  # Firebase UID
     is_deleted: bool = False
     deleted_at: Optional[datetime] = None
     notes: Optional[str] = None

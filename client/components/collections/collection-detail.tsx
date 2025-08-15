@@ -1,7 +1,7 @@
 "use client"
 
 import { ProductShowcase } from "@/components/products/product-showcase"
-import type { Collection } from "@/types"
+import type { Collection } from "@/types/collections"
 
 interface CollectionDetailProps {
   collection: Collection

@@ -48,7 +48,7 @@ class UserRepository(BaseRepository[User]):
         """
         return await self.get_by_field("firebase_uid", firebase_uid)
 
-    async def check_email_exists(self, email: str, exclude_id: Optional[UUID] = None) -> bool:
+    async def check_email_exists(self, email: str, exclude_id: Optional[str] = None) -> bool:  # Firebase UID
         """
         Check if email already exists.
         
@@ -247,7 +247,7 @@ class UserRepository(BaseRepository[User]):
             'recent_logins': recent_logins
         }
 
-    async def update_last_login(self, user_id: UUID) -> bool:
+    async def update_last_login(self, user_id: str) -> bool:  # Firebase UID
         """
         Update user's last login timestamp.
         
@@ -320,9 +320,9 @@ class UserRepository(BaseRepository[User]):
 
     async def bulk_update_role(
         self,
-        user_ids: List[UUID],
+        user_ids: List[str],  # Firebase UIDs
         new_role: str,
-        updated_by: Optional[UUID] = None
+        updated_by: Optional[str] = None  # Firebase UID
     ) -> int:
         """
         Update role for multiple users.
@@ -402,7 +402,7 @@ class UserRepository(BaseRepository[User]):
 
     async def get_user_activity_summary(
         self,
-        user_id: UUID,
+        user_id: str,  # Firebase UID
         days: int = 30
     ) -> Dict[str, Any]:
         """

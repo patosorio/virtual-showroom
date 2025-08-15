@@ -33,7 +33,7 @@ class AuthService(BaseService[User, UserRepository]):
     async def create_user(
         self,
         data: UserCreate,
-        user_id: Optional[UUID] = None
+        user_id: Optional[str] = None  # Firebase UID
     ) -> User:
         """
         Create a new user account.
@@ -108,9 +108,9 @@ class AuthService(BaseService[User, UserRepository]):
 
     async def update_user_profile(
         self,
-        user_id: UUID,
+        user_id: str,  # Firebase UID
         data: UserProfileUpdate,
-        current_user_id: Optional[UUID] = None
+        current_user_id: Optional[str] = None  # Firebase UID
     ) -> User:
         """
         Update user profile information.
@@ -141,9 +141,9 @@ class AuthService(BaseService[User, UserRepository]):
 
     async def update_user_role(
         self,
-        user_id: UUID,
+        user_id: str,  # Firebase UID
         role_data: UserRoleUpdate,
-        admin_user_id: UUID
+        admin_user_id: str  # Firebase UID
     ) -> User:
         """
         Update user role (admin only).
@@ -176,7 +176,7 @@ class AuthService(BaseService[User, UserRepository]):
         
         return updated_user
 
-    async def record_login(self, user_id: UUID) -> bool:
+    async def record_login(self, user_id: str) -> bool:  # Firebase UID
         """
         Record user login activity.
         
@@ -190,8 +190,8 @@ class AuthService(BaseService[User, UserRepository]):
 
     async def deactivate_user(
         self,
-        user_id: UUID,
-        admin_user_id: UUID
+        user_id: str,  # Firebase UID
+        admin_user_id: str  # Firebase UID
     ) -> User:
         """
         Deactivate a user account.

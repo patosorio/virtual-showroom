@@ -33,7 +33,7 @@ class CollectionService(BaseService[Collection, CollectionRepository]):
     async def create_collection(
         self, 
         data: CollectionCreate, 
-        user_id: Optional[UUID] = None
+        user_id: Optional[str] = None  # Firebase UID
     ) -> Collection:
         """
         Create a new collection with business validation.
@@ -136,7 +136,7 @@ class CollectionService(BaseService[Collection, CollectionRepository]):
         filters: CollectionListFilters,
         skip: int = 0,
         limit: int = 20,
-        user_id: Optional[UUID] = None
+        user_id: Optional[str] = None  # Firebase UID
     ) -> Tuple[List[Collection], int]:
         """
         List collections with filtering and pagination.
@@ -150,16 +150,26 @@ class CollectionService(BaseService[Collection, CollectionRepository]):
         Returns:
             Tuple of (collections, total_count)
         """
-        # Convert filters to dict
-        filter_dict = filters.model_dump(exclude_unset=True)
-        
-        # Apply business logic filters
-        business_filters = await self._apply_business_filters(filter_dict, user_id)
-        
-        # Get collections using repository
-        collections = await self.repository.get_collections_by_filters(
-            business_filters, skip, limit
-        )
+        try:
+            # Convert filters to dict, excluding None values
+            filter_dict = filters.model_dump(exclude_unset=True, exclude_none=True)
+            
+            # Apply business logic filters
+            business_filters = await self._apply_business_filters(filter_dict, user_id)
+            
+            # Get collections using repository with products loaded for count
+            collections = await self.repository.get_all(
+                skip=skip,
+                limit=limit,
+                filters=business_filters,
+                load_relations=['products']
+            )
+            
+        except Exception as e:
+            import traceback
+            print("Error in list_collections service:", str(e))
+            print("Traceback:", traceback.format_exc())
+            raise
         
         # Get total count
         total = await self.repository.count(filters=business_filters)
@@ -585,7 +595,7 @@ class CollectionService(BaseService[Collection, CollectionRepository]):
     async def _apply_business_filters(
         self,
         filters: Optional[Dict[str, Any]],
-        user_id: Optional[UUID]
+        user_id: Optional[str]  # Firebase UID
     ) -> Dict[str, Any]:
         """Apply business logic filters."""
         if not filters:

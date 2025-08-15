@@ -10,7 +10,11 @@ from datetime import datetime
 from typing import Any
 
 from sqlalchemy import Column, DateTime, Boolean, Text
+from sqlalchemy.types import String
 from sqlalchemy.dialects.postgresql import UUID
+
+# Use UUID type for PostgreSQL, fallback to String for SQLite
+UUIDType = UUID(as_uuid=True)
 from sqlalchemy.ext.declarative import as_declarative, declared_attr
 from sqlalchemy.sql import func
 
@@ -67,15 +71,15 @@ class BaseModel(Base):
     
     # User tracking
     created_by = Column(
-        UUID(as_uuid=True),
+        String(128),  # Firebase UID length
         nullable=True,
-        doc="ID of user who created this record"
+        doc="Firebase UID of user who created this record"
     )
     
     updated_by = Column(
-        UUID(as_uuid=True),
+        String(128),  # Firebase UID length
         nullable=True,
-        doc="ID of user who last updated this record"
+        doc="Firebase UID of user who last updated this record"
     )
     
     # Soft deletion

@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Download, ZoomIn, ZoomOut, Maximize2 } from "lucide-react"
-import type { Collection } from "@/types"
+import type { Collection } from "@/types/collections"
 
 interface LookbookGalleryProps {
   collection: Collection
