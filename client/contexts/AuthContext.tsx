@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 interface AuthContextType extends AuthState {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, displayName?: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -107,6 +108,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const signInWithGoogle = async () => {
+    try {
+      setState(prev => ({ ...prev, isLoading: true }));
+      const firebaseUser = await firebaseAuth.signInWithGoogle();
+      
+      // Backend user creation will be handled by auth state change
+      // The onAuthStateChanged will be triggered and will call fetchUserProfile
+      // which will call /auth/me and create the user if needed
+      
+      toast.success('Signed in with Google successfully!');
+    } catch (error: any) {
+      console.error('Google sign-in error:', error);
+      toast.error(error.message || 'Failed to sign in with Google');
+      setState(prev => ({ ...prev, isLoading: false }));
+      throw error;
+    }
+  };
+
   const signOut = async () => {
     try {
       await firebaseAuth.signOut();
@@ -137,6 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     ...state,
     signIn,
     signUp,
+    signInWithGoogle,
     signOut,
     resetPassword,
     refreshUser,
